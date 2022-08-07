@@ -1,0 +1,11 @@
+{
+  "name": "latex-to-expr",
+  "version": "0.1.0",
+  "description": "parse latex to expression tree",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "David Maxwell",
+  "license": "ISC"
+}
