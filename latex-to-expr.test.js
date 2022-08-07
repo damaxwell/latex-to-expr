@@ -1,4 +1,4 @@
-const latex_parser = require('./latex-mathjs-parser')
+const latex_parser = require('./latex-to-expr')
 
 test("float", () => {
   input = "3.14"
@@ -210,3 +210,10 @@ test("cos poly theta", () => {
   expect(p.parse().toString()).toBe(output);
 });
 
+
+test("-x^2", () => {
+  input = "-x^2"
+  output = "neg[^[variable[x],number[2]]]"
+  p = new latex_parser.Parser(input)
+  expect(p.parse().toString()).toBe(output);
+});

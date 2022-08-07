@@ -1,10 +1,3 @@
-const math = require('mathjs')
-
-module.exports = {
-  'Tokenizer': Tokenizer,
-  'Parser': Parser,
-  'compare': compare
-}
 
 
 function Token(type, value) {   this.type = type;   this.value = value; }
@@ -272,10 +265,6 @@ class Node {
 
   }
 
-  toMathJSObject() {
-    let mathjsstr = this.toMathJS()
-    return math.parse(mathjsstr)
-  }
 }
 
 
@@ -417,7 +406,7 @@ class Parser {
   }
 
   multiplication() {
-    let lhs = this.power();
+    let lhs = this.unary();
 
     while(true) {
       let next = this.nexttoken()
@@ -426,14 +415,14 @@ class Parser {
         let op = next.value
         if( (op == '*') ||  (op == '/') ) {
           this.consume()
-          let rhs = this.power()
+          let rhs = this.unary()
           lhs =  new Node(op,lhs,rhs)          
         } else {
           break
         }
       } else if( next.type == 'Command' || next.type == 'OpenBrace' ||
             next.type == 'Variable' || next.type == 'Number' ) {
-          let rhs = this.ppower()
+          let rhs = this.power()
           lhs = new Node('*',lhs,rhs)                    
       } else {
         if( next.type == 'Other' ) {
@@ -450,7 +439,7 @@ class Parser {
   // This is used for arguments to functions that are not surrounded by
   // parentheses.
   pmultiplication() {
-    let lhs = this.ppower({allow_functions: false });
+    let lhs = this.power({allow_functions: false });
 
     while(true) {
       let next = this.nexttoken()
@@ -466,47 +455,12 @@ class Parser {
         }
       } else if( next.type == 'Command' || next.type == 'OpenBrace' ||
             next.type == 'Variable' || next.type == 'Number' ) {
-          let rhs = this.ppower({allow_functions: false })
+          let rhs = this.power({allow_functions: false })
           lhs = new Node('*',lhs,rhs)                    
       } else {
         break
       }
     }
-    return lhs
-  }
-
-  power() {
-    let lhs = this.unary()
-
-    let next = this.nexttoken()
-    if( next.type == 'Operator' ) {
-      let op = next.value
-      if (op == '^')  {
-        this.consume()
-        let rhs = this.unary()
-        return new Node('^',lhs,rhs)
-      }
-
-    }
-
-    return lhs
-  }
-
-  ppower( {allow_functions = true } = {} ) {
-
-    let lhs = this.funcapply({allow_functions: allow_functions})
-
-    let next = this.nexttoken()
-    if( next.type == 'Operator' ) {
-      let op = next.value
-      if (op == '^')  {
-        this.consume()
-        let rhs = this.unary()
-        return new Node('^',lhs,rhs)
-      }
-
-    }
-
     return lhs
   }
 
@@ -527,8 +481,26 @@ class Parser {
         return new Node("null",null,null)
       }
     } else {
-      return this.funcapply({allow_functions: allow_functions})
+      return this.power({allow_functions: allow_functions})
     }
+  }
+
+  power( {allow_functions = true } = {} ) {
+
+    let lhs = this.funcapply({allow_functions: allow_functions})
+
+    let next = this.nexttoken()
+    if( next.type == 'Operator' ) {
+      let op = next.value
+      if (op == '^')  {
+        this.consume()
+        let rhs = this.unary()
+        return new Node('^',lhs,rhs)
+      }
+
+    }
+
+    return lhs
   }
 
   funcapply({allow_functions = true} = {}) {
